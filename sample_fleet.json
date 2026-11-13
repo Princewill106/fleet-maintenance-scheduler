@@ -1,0 +1,8 @@
+[
+ {"id": "TRK-01", "odometer": 48800, "daily_km": 180, "last_service": {"oil change": {"km": 44000, "date": "2026-08-20"}, "brake pads": {"km": 30000, "date": "2026-03-01"}, "tyre rotation": {"km": 40000, "date": "2026-06-01"}, "air filter": {"km": 36000, "date": "2026-04-10"}}},
+ {"id": "TRK-02", "odometer": 61000, "daily_km": 150, "last_service": {"oil change": {"km": 55500, "date": "2026-07-01"}, "brake pads": {"km": 50000, "date": "2026-06-10"}, "tyre rotation": {"km": 55000, "date": "2026-07-01"}, "air filter": {"km": 50000, "date": "2026-06-10"}}},
+ {"id": "VAN-03", "odometer": 22000, "daily_km": 90, "last_service": {"oil change": {"km": 20500, "date": "2026-09-01"}, "brake pads": {"km": 10000, "date": "2026-01-15"}, "tyre rotation": {"km": 15000, "date": "2026-05-01"}, "air filter": {"km": 10000, "date": "2026-01-15"}}},
+ {"id": "VAN-04", "odometer": 35500, "daily_km": 120, "last_service": {"oil change": {"km": 34000, "date": "2026-09-25"}, "brake pads": {"km": 30000, "date": "2026-08-01"}, "tyre rotation": {"km": 30000, "date": "2026-08-01"}, "air filter": {"km": 30000, "date": "2026-08-01"}}},
+ {"id": "VAN-05", "odometer": 12000, "daily_km": 60, "last_service": {"oil change": {"km": 10000, "date": "2026-07-25"}, "brake pads": {"km": 0, "date": "2026-05-01"}, "tyre rotation": {"km": 5000, "date": "2026-05-01"}, "air filter": {"km": 0, "date": "2026-05-01"}}},
+ {"id": "BIKE-06", "odometer": 9000, "daily_km": 70, "last_service": {"oil change": {"km": 8500, "date": "2026-09-30"}, "brake pads": {"km": 5000, "date": "2026-07-01"}, "tyre rotation": {"km": 5000, "date": "2026-07-01"}, "air filter": {"km": 5000, "date": "2026-07-01"}}}
+]

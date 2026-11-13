@@ -1,0 +1,198 @@
+{
+  "name": "Fleet Maintenance Scheduler (AI Automation Projects #36)",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 6 * * 1-5"
+            }
+          ]
+        }
+      },
+      "id": "a425c2b1-0a4e-5357-8040-bbcbb3dd3354",
+      "name": "Schedule (weekdays 6am)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "value": "",
+          "mode": "list"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "",
+          "mode": "list"
+        },
+        "options": {}
+      },
+      "id": "fecd6ed5-a8a9-5385-b12a-e32bc2da8aba",
+      "name": "Read fleet sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        240,
+        0
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "1f3c1cfa-9909-540d-9ea1-5336865edfe8",
+      "name": "Test with sample data",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Sample data from this repo. Click 'Test workflow' to run the whole flow on it.\nconst sample = [\n {\n  \"id\": \"TRK-01\",\n  \"odometer\": 48800,\n  \"daily_km\": 180,\n  \"oil_change_km\": 44000,\n  \"brake_pads_km\": 30000,\n  \"tyre_rotation_km\": 40000,\n  \"air_filter_km\": 36000,\n  \"oil_change_date\": \"2026-08-20\",\n  \"brake_pads_date\": \"2026-03-01\",\n  \"tyre_rotation_date\": \"2026-06-01\",\n  \"air_filter_date\": \"2026-04-10\"\n },\n {\n  \"id\": \"TRK-02\",\n  \"odometer\": 61000,\n  \"daily_km\": 150,\n  \"oil_change_km\": 55500,\n  \"brake_pads_km\": 50000,\n  \"tyre_rotation_km\": 55000,\n  \"air_filter_km\": 50000,\n  \"oil_change_date\": \"2026-07-01\",\n  \"brake_pads_date\": \"2026-06-10\",\n  \"tyre_rotation_date\": \"2026-07-01\",\n  \"air_filter_date\": \"2026-06-10\"\n },\n {\n  \"id\": \"VAN-03\",\n  \"odometer\": 22000,\n  \"daily_km\": 90,\n  \"oil_change_km\": 20500,\n  \"brake_pads_km\": 10000,\n  \"tyre_rotation_km\": 15000,\n  \"air_filter_km\": 10000,\n  \"oil_change_date\": \"2026-09-01\",\n  \"brake_pads_date\": \"2026-01-15\",\n  \"tyre_rotation_date\": \"2026-05-01\",\n  \"air_filter_date\": \"2026-01-15\"\n },\n {\n  \"id\": \"VAN-04\",\n  \"odometer\": 35500,\n  \"daily_km\": 120,\n  \"oil_change_km\": 34000,\n  \"brake_pads_km\": 30000,\n  \"tyre_rotation_km\": 30000,\n  \"air_filter_km\": 30000,\n  \"oil_change_date\": \"2026-09-25\",\n  \"brake_pads_date\": \"2026-08-01\",\n  \"tyre_rotation_date\": \"2026-08-01\",\n  \"air_filter_date\": \"2026-08-01\"\n },\n {\n  \"id\": \"VAN-05\",\n  \"odometer\": 12000,\n  \"daily_km\": 60,\n  \"oil_change_km\": 10000,\n  \"brake_pads_km\": 0,\n  \"tyre_rotation_km\": 5000,\n  \"air_filter_km\": 0,\n  \"oil_change_date\": \"2026-07-25\",\n  \"brake_pads_date\": \"2026-05-01\",\n  \"tyre_rotation_date\": \"2026-05-01\",\n  \"air_filter_date\": \"2026-05-01\"\n },\n {\n  \"id\": \"BIKE-06\",\n  \"odometer\": 9000,\n  \"daily_km\": 70,\n  \"oil_change_km\": 8500,\n  \"brake_pads_km\": 5000,\n  \"tyre_rotation_km\": 5000,\n  \"air_filter_km\": 5000,\n  \"oil_change_date\": \"2026-09-30\",\n  \"brake_pads_date\": \"2026-07-01\",\n  \"tyre_rotation_date\": \"2026-07-01\",\n  \"air_filter_date\": \"2026-07-01\"\n }\n];\nreturn sample.map(json => ({ json }));"
+      },
+      "id": "d9a4cc2c-363b-586e-ba54-e8afbfe41010",
+      "name": "Sample data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Fleet Maintenance Scheduler: core logic (ported from main.py)\n\n// ---- input normaliser (works for Webhook, Form, WhatsApp, Gmail, Sheets and sample data)\nconst input = $input.all().flatMap(i => {\n  const j = i.json || {};\n  if (j.messages && Array.isArray(j.messages)) {           // WhatsApp Trigger\n    return j.messages.filter(m => m.text).map(m => ({ from: '+' + m.from, text: m.text.body }));\n  }\n  if (j.Subject !== undefined || j.From !== undefined) {     // Gmail Trigger (simple)\n    return [{ from: (j.From || '').replace(/.*<|>.*/g, ''), subject: j.Subject || '', body: j.snippet || j.text || '' }];\n  }\n  const b = (j.body !== undefined && j.headers !== undefined) ? j.body : j;   // Webhook wraps payload in body\n  if (Array.isArray(b)) return b;\n  if (b && Array.isArray(b.items)) return b.items;\n  return [b];\n});\n\nconst INT = { oil_change: [5000, 90, 35000], brake_pads: [20000, 365, 60000], tyre_rotation: [10000, 180, 15000], air_filter: [15000, 365, 12000] };\nconst today = new Date(); today.setHours(0, 0, 0, 0);\nconst out = [];\nfor (const v of input) {\n  const items = [];\n  for (const [item, [kmInt, dayInt, cost]] of Object.entries(INT)) {\n    const byKm = (Number(v[item + '_km']) + kmInt - Number(v.odometer)) / Number(v.daily_km);\n    const byTime = (new Date(v[item + '_date'] + 'T00:00:00').getTime() + dayInt * 864e5 - today) / 864e5;\n    const left = Math.round(Math.min(byKm, byTime));\n    if (left <= 14) items.push({ item: item.replace('_', ' '), left, cost, by: byKm <= byTime ? 'km' : 'time' });\n  }\n  if (items.length) out.push({ vehicle: v.id, overdue: items.some(i => i.left < 0), cost: items.reduce((s, i) => s + i.cost, 0),\n    work_order: items.map(i => `${i.item}: ${i.left < 0 ? 'OVERDUE' : 'due in ' + i.left + 'd'} (by ${i.by})`).join('; ') });\n}\nout.sort((a, b) => b.overdue - a.overdue);\nreturn out.map(json => ({ json }));\n"
+      },
+      "id": "d1aca7bc-0453-58e4-bde6-ff51f290b9b7",
+      "name": "Logic",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        480,
+        120
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "",
+          "mode": "list"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "",
+          "mode": "list"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": []
+        },
+        "options": {}
+      },
+      "id": "247895a4-9728-5fe7-90a0-f58269bf6582",
+      "name": "Add work orders for workshop",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        720,
+        120
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Fleet Maintenance Scheduler\nServices each vehicle by kilometres or days, whichever comes first, and never takes too many off the road at once.\n\nEach weekday it reads one row per vehicle (odometer, daily_km, and last service km/date for oil change, brake pads, tyre rotation, air filter). Items due within 14 days by kilometres or by time (whichever comes first) become work orders for the workshop; overdue items are flagged.\n\n**Try it:** click *Test workflow* to run on the sample data. Then connect your credentials on the output nodes and activate.\n\nCode and docs: github.com/Princewill106/fleet-maintenance-scheduler",
+        "height": 340,
+        "width": 420,
+        "color": 5
+      },
+      "id": "55fe106c-b6b5-5be4-82d1-1aa54d878476",
+      "name": "About this workflow",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -40,
+        -460
+      ]
+    }
+  ],
+  "connections": {
+    "Schedule (weekdays 6am)": {
+      "main": [
+        [
+          {
+            "node": "Read fleet sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Test with sample data": {
+      "main": [
+        [
+          {
+            "node": "Sample data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read fleet sheet": {
+      "main": [
+        [
+          {
+            "node": "Logic",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sample data": {
+      "main": [
+        [
+          {
+            "node": "Logic",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Logic": {
+      "main": [
+        [
+          {
+            "node": "Add work orders for workshop",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "active": false,
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}
